@@ -1,0 +1,55 @@
+# IDE Settings
+.idea/
+.eclipse/
+.classpath
+.project
+.settings
+.vscode/
+*.iws
+*.iml
+*.ipr
+
+# Build Artifacts
+target/
+build/
+out/
+bin/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# Logs and Temporary files
+logs/
+*.log
+*.txt
+*.tmp
+*.swp
+*~
+
+# System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Dependencies (if not using Maven/Gradle wrapper)
+# .m2/
+# node_modules/
+
+# Environment-specific and Secret Files
+# Exclude sensitive configuration files that contain credentials
+.env
+application.properties.example # optionally include a template example file, but ignore the actual one
+# application.properties # Only ignore if you use environment variables or another mechanism to manage secrets
+# application.yml # Same as above
+
+# Maven Wrapper
+# The maven wrapper is generally tracked, except for the jar file itself
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# VM crash logs
+hs_err_pid*
+
