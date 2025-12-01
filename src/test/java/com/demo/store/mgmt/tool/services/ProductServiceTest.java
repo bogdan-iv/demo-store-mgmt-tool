@@ -1,6 +1,7 @@
 package com.demo.store.mgmt.tool.services;
 
 import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
+import com.demo.store.mgmt.tool.exception.ProductValidationException;
 import com.demo.store.mgmt.tool.models.Product;
 import com.demo.store.mgmt.tool.repositories.ProductRepository;
 import org.junit.jupiter.api.Assertions;
@@ -129,7 +130,19 @@ public class ProductServiceTest {
         verify(productRepository, times(1)).findById(1L);
         verify(productRepository, times(1)).save(product1);
     }
-
+    @Test
+    public void testChangeNegativePrice_ThrowsException() {
+        BigDecimal newPrice = BigDecimal.valueOf(-1250.00);
+        ProductValidationException thrown = Assertions.assertThrows(
+                ProductValidationException.class, // The expected exception type
+                () -> {
+                    // The code that should throw the exception
+                    productService.changeProductPrice(1L, newPrice);
+                }
+        );
+        assertThat(thrown.getMessage()).contains("New price must be greater than zero");
+        verify(productRepository, times(0)).save(any(Product.class));
+    }
 
     @Test
     public void testChangePrice_NotFound_ThrowsException() {

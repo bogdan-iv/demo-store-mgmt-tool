@@ -1,6 +1,7 @@
 package com.demo.store.mgmt.tool.services;
 
 import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
+import com.demo.store.mgmt.tool.exception.ProductValidationException;
 import com.demo.store.mgmt.tool.models.Product;
 import com.demo.store.mgmt.tool.repositories.ProductRepository;
 import jakarta.transaction.Transactional;
@@ -44,6 +45,9 @@ public class ProductService {
     }
 
     public Product changeProductPrice(Long id, BigDecimal newPrice) {
+        if (newPrice == null || newPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ProductValidationException("New price must be greater than zero");
+        }
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) {
             throw new ProductNotFoundException( id);
