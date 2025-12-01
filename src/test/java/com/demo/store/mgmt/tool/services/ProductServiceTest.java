@@ -87,6 +87,29 @@ public class ProductServiceTest {
     }
 
     @Test
+    public void testFindProductByNameContaining() {
+        List<Product> productList = Arrays.asList(product2);
+        when(productRepository.findByNameContaining("Mou")).thenReturn(productList);
+
+        List<Product> result = productService.findProductsByNameContaining("Mou");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Mouse");
+
+        // Verify that findProductsByNameContaining was called once
+        verify(productRepository, times(1)).findByNameContaining("Mou");
+    }
+
+    @Test
+    public void testFindProductByName() {
+        when(productRepository.findByName("Mouse")).thenReturn(Optional.of(product2));
+        Optional<Product> result = productService.findProductByName("Mouse");
+
+        assertThat(result.get().getName()).isEqualTo("Mouse");
+        // Verify that findByName was called once
+        verify(productRepository, times(1)).findByName("Mouse");
+    }
+
+    @Test
     public void testChangePrice_Success() {
         BigDecimal newPrice = BigDecimal.valueOf(1250.00);
 
