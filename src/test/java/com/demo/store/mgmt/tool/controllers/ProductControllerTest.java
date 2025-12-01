@@ -21,7 +21,7 @@ import java.util.Optional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -96,5 +96,16 @@ public class ProductControllerTest {
                 .andExpect(status().isOk()) // Expecting 200 OK for an update
                 .andExpect(jsonPath("$.price").value(newPrice));
 
+    }
+
+    @Test
+    void testDelete() throws Exception {
+        // Mock the void method call (doNothing is cleaner than when/thenReturn)
+        doNothing().when(productService).deleteProduct(1L);
+
+        mockMvc.perform(delete("/api/products/admin/{id}", 1L))
+                .andExpect(status().isNoContent()); // Expecting 204 No Content
+
+        verify(productService, times(1)).deleteProduct(1L);
     }
 }
