@@ -1,10 +1,105 @@
 package com.demo.store.mgmt.tool.controllers;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.demo.store.mgmt.tool.dto.AddProductRequest;
+import com.demo.store.mgmt.tool.dto.ProductResponse;
+import com.demo.store.mgmt.tool.models.Product;
+import com.demo.store.mgmt.tool.services.ProductService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
+    private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
+    @PostMapping("/public")
+    // Use @Valid to apply the validation constraints defined in the record
+    public ResponseEntity<Product>  addProduct(@RequestBody @Valid AddProductRequest productRequest) {
+        // Map the record data to the Entity or Service method parameters
+        Product newProduct = new Product();
+        newProduct.setName(productRequest.name());
+        newProduct.setPrice(productRequest.price());
+        Product savedProduct =  productService.addProduct(newProduct);
+        return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> findProductById(@PathVariable Long id) {
+        return productService.findProductById(id)
+                .map(product -> new ProductResponse(product.getId(), product.getName(), product.getPrice()))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<List<Product>> findAllProducts() {
+        logger.info("Fetching all products");
+        List<Product> products = productService.findAllProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/public/search")
+    public ResponseEntity<List<Product>> findProducts(@RequestParam String name) {
+        logger.info("Searching products by name: {}", name);
+        List<Product> products = productService.findProductsByNameContaining(name);
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/public/price-range")
+    public ResponseEntity<List<Product>> findProductsByPriceRange(
+            @RequestParam BigDecimal minPrice,
+            @RequestParam BigDecimal maxPrice) {
+        logger.info("Fetching products in price range: {} - {}", minPrice, maxPrice);
+        List<Product> products = productService.findProductsByPriceRange(minPrice, maxPrice);
+        return ResponseEntity.ok(products);
+    }
+
+    @PutMapping("/admin/{id}/price")
+    public ResponseEntity<Product> changeProductPrice(
+            @PathVariable Long id,
+            @RequestParam BigDecimal newPrice) {
+        logger.info("Updating price for product ID: {} to {}", id, newPrice);
+        try {
+            Product updatedProduct = productService.changeProductPrice(id, newPrice);
+            logger.info("Price updated successfully for product ID: {}", id);
+            return ResponseEntity.ok(updatedProduct);
+        } catch (RuntimeException e) {
+            logger.error("Error updating product price: {}", e.getMessage(), e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/admin/{id}")
+        public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        logger.info("Deleting product with ID: {}", id);
+        try {
+            productService.deleteProduct(id);
+            logger.info("Product deleted successfully with ID: {}", id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            logger.error("Error deleting product: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/user/count")
+    public ResponseEntity<Long> getProductCount() {
+        logger.info("Fetching product count");
+        long count = productService.countProducts();
+        return ResponseEntity.ok(count);
+    }
 
 }
