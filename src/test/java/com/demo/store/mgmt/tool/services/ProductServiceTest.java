@@ -1,7 +1,9 @@
 package com.demo.store.mgmt.tool.services;
 
+import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
 import com.demo.store.mgmt.tool.models.Product;
 import com.demo.store.mgmt.tool.repositories.ProductRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -105,4 +107,28 @@ public class ProductServiceTest {
         verify(productRepository, times(1)).save(product1);
     }
 
+
+    @Test
+    public void testChangePrice_NotFound_ThrowsException() {
+        Long nonExistentId = 99L;
+
+        // 1. Arrange the mock behavior: return empty when the specific ID is looked up
+        when(productRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // 2. Act and Assert using assertThrows()
+        // We expect a ProductNotFoundException to be thrown when the lambda is executed
+        ProductNotFoundException thrown = Assertions.assertThrows(
+                ProductNotFoundException.class, // The expected exception type
+                () -> {
+                    // The code that should throw the exception
+                    productService.changeProductPrice(nonExistentId, BigDecimal.valueOf(500.00));
+                }
+        );
+
+        // 3. Optional: Further assertions on the caught exception object itself
+        assertThat(thrown.getMessage()).contains("Product not found with ID: 99");
+
+        // Verify that the save method was NOT called, as the flow was interrupted by the exception
+        verify(productRepository, times(0)).save(any(Product.class));
+    }
 }

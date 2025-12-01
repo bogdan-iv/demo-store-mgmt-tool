@@ -1,5 +1,6 @@
 package com.demo.store.mgmt.tool.services;
 
+import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
 import com.demo.store.mgmt.tool.models.Product;
 import com.demo.store.mgmt.tool.repositories.ProductRepository;
 import jakarta.transaction.Transactional;
@@ -45,7 +46,7 @@ public class ProductService {
     public Product changeProductPrice(Long id, BigDecimal newPrice) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) {
-            throw new RuntimeException("Product not found with id: " + id);
+            throw new ProductNotFoundException( id);
         }
         Product product = productOpt.get();
         product.setPrice(newPrice);
