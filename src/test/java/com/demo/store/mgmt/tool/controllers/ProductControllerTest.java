@@ -65,12 +65,12 @@ public class ProductControllerTest {
 
         Product product1 = new Product(1L, "Laptop", BigDecimal.valueOf(1200.00));
         Product product2 = new Product(2L, "Mouse",  BigDecimal.valueOf(25.00));
-
         when(productService.findAllProducts()).thenReturn(Arrays.asList(product1, product2));
-
-
-        mockMvc.perform(get("/api/products/public"))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/products/public")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Laptop"))
+                .andExpect(jsonPath("$.length()").value(2));
     }
 
     @Test
