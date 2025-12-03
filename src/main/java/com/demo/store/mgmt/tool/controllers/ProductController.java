@@ -28,8 +28,8 @@ public class ProductController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-        public ResponseEntity<Product>  addProduct(@RequestBody @Valid AddProductRequest productRequest) {
-        Product savedProduct =  productService.addProduct(productRequest);
+    public ResponseEntity<Product> addProduct(@RequestBody @Valid AddProductRequest productRequest) {
+        Product savedProduct = productService.addProduct(productRequest);
         return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
 
@@ -72,7 +72,7 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Product> changeProductPrice(
             @PathVariable Long id,
-            @RequestParam BigDecimal newPrice) {
+            @RequestParam @Valid BigDecimal newPrice) {
         logger.info("Updating price for product ID: {} to {}", id, newPrice);
         Product updatedProduct = productService.changeProductPrice(id, newPrice);
 
@@ -82,7 +82,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-        public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         logger.info("Deleting product with ID: {}", id);
         productService.deleteProduct(id);
         logger.info("Product deleted successfully with ID: {}", id);

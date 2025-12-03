@@ -79,9 +79,52 @@ public class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
+        // User has the required "ADMIN" role
+    void testAddProduct_AsAdmin_ShouldFailWith400() {
+        AddProductRequest request = new AddProductRequest("Keyboard", BigDecimal.valueOf(-75.0));
+
+        webTestClient.post().uri("/api/v1/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request) // Pass the DTO directly
+                .exchange() // Perform the request
+                .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testAddProduct_WithInvalidJsonPriceString_ShouldReturn400BadRequest() {
+        String invalidJsonPayload = "{\"name\": \"Mouse3\", \"price\": \"invalid-string-value\"}";
+
+        // Test the invalid type scenario:
+        webTestClient.post().uri("/api/v1/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidJsonPayload) // Send the raw invalid JSON string
+                .exchange()
+                .expectStatus().isBadRequest() // Assert HTTP Status 400 Bad Request
+                .expectBody()
+                // Assert that the body contains the custom message from our GlobalExceptionHandler
+                .jsonPath("$.message").isEqualTo("Malformed JSON or invalid data type for field.");
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testAddProduct_WithMalformedPriceString_ShouldReturn400BadRequest() {
+        String malformedJsonPayload = "{\"name\": \"Mouse3\", \"price\": AAA}";
+
+        // Test the malformed JSON scenario (AAA without quotes):
+        webTestClient.post().uri("/api/v1/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(malformedJsonPayload) // Send the raw invalid JSON string
+                .exchange()
+                .expectStatus().isBadRequest() // Assert HTTP Status 400 Bad Request
+                .expectBody()
+                .jsonPath("$.message").isEqualTo("Malformed JSON or invalid data type for field.");
+    }
+
+    @Test
     @WithMockUser(roles = "USER")
     void testGetAllProducts() {
-
         productRepository.save(new Product(null, "Laptop", BigDecimal.valueOf(1200.00)));
         productRepository.save(new Product(null, "Mouse", BigDecimal.valueOf(25.00)));
 
@@ -98,7 +141,7 @@ public class ProductControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void testChangePrice() {
+    void testChangePriceShouldSucceed() {
         // Pre-populate DB with an item
         Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00)));
         Long productId = existingProduct.getId();
@@ -115,6 +158,26 @@ public class ProductControllerTest {
                 .expectBody()
                 .jsonPath("$.price").isEqualTo(newPrice);
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testChangePriceShouldFailWith400() {
+        // Pre-populate DB with an item
+        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00)));
+        Long productId = existingProduct.getId();
+        //Invalid price containing letters
+        String newPrice = "99A.99";
+
+        String url = UriComponentsBuilder.fromPath("/api/v1/products/{id}/price")
+                .queryParam("newPrice", newPrice)
+                .buildAndExpand(productId)
+                .toUriString();
+
+        webTestClient.put().uri(url)
+                .exchange()
+                .expectStatus().is4xxClientError();
+    }
+
 
     @Test
     @WithMockUser(roles = "ADMIN")

@@ -4,11 +4,14 @@ import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
 import com.demo.store.mgmt.tool.exception.ProductValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +62,31 @@ public class GlobalExceptionHandler {
                 request.getDescription(false)
         );
         return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, WebRequest request) {
+        ErrorResponse errorDetails = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), // Return 400 Bad Request
+                new Date(),
+                "Malformed JSON or invalid data type for field.",
+                request.getDescription(false)
+        );
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
+        String errorMsg = String.format("Failed to convert value '%s' to required type '%s'.",
+                ex.getValue(), ex.getRequiredType().getSimpleName());
+
+        ErrorResponse errorDetails = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(), // Return 400 Bad Request
+                new Date(),
+                errorMsg,
+                request.getDescription(false)
+        );
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
     // A generic handler for any other unexpected exceptions
