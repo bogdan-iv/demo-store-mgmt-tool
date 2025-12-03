@@ -1,5 +1,6 @@
 package com.demo.store.mgmt.tool.services;
 
+import com.demo.store.mgmt.tool.dto.AddProductRequest;
 import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
 import com.demo.store.mgmt.tool.exception.ProductValidationException;
 import com.demo.store.mgmt.tool.models.Product;
@@ -20,8 +21,12 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public Product addProduct(Product product) {
-        return productRepository.save(product);
+    public Product addProduct(AddProductRequest productRequest)
+    {
+        Product newProduct = new Product();
+        newProduct.setName(productRequest.name());
+        newProduct.setPrice(productRequest.price());
+        return productRepository.save(newProduct);
     }
 
     public Optional<Product> findProductById(Long id) {

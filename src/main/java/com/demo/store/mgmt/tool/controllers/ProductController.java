@@ -29,10 +29,7 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<Product>  addProduct(@RequestBody @Valid AddProductRequest productRequest) {
-        Product newProduct = new Product();
-        newProduct.setName(productRequest.name());
-        newProduct.setPrice(productRequest.price());
-        Product savedProduct =  productService.addProduct(newProduct);
+        Product savedProduct =  productService.addProduct(productRequest);
         return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
 
@@ -77,28 +74,19 @@ public class ProductController {
             @PathVariable Long id,
             @RequestParam BigDecimal newPrice) {
         logger.info("Updating price for product ID: {} to {}", id, newPrice);
-        try {
-            Product updatedProduct = productService.changeProductPrice(id, newPrice);
-            logger.info("Price updated successfully for product ID: {}", id);
-            return ResponseEntity.ok(updatedProduct);
-        } catch (RuntimeException e) {
-            logger.error("Error updating product price: {}", e.getMessage(), e);
-            return ResponseEntity.notFound().build();
-        }
+        Product updatedProduct = productService.changeProductPrice(id, newPrice);
+
+        logger.info("Price updated successfully for product ID: {}", id);
+        return ResponseEntity.ok(updatedProduct);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         logger.info("Deleting product with ID: {}", id);
-        try {
-            productService.deleteProduct(id);
-            logger.info("Product deleted successfully with ID: {}", id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            logger.error("Error deleting product: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        productService.deleteProduct(id);
+        logger.info("Product deleted successfully with ID: {}", id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/count")

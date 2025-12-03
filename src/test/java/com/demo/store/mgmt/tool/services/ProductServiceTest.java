@@ -1,5 +1,6 @@
 package com.demo.store.mgmt.tool.services;
 
+import com.demo.store.mgmt.tool.dto.AddProductRequest;
 import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
 import com.demo.store.mgmt.tool.exception.ProductValidationException;
 import com.demo.store.mgmt.tool.models.Product;
@@ -58,9 +59,10 @@ public class ProductServiceTest {
         // Define the behavior of the mock repository when save() is called
         // We ensure it returns the product that was passed in, simulating a successful DB save
         when(productRepository.save(any(Product.class))).thenReturn(product1);
+        AddProductRequest productRequest1 = new AddProductRequest(product1.getName(), product1.getPrice());
 
         // Call the service method we are testing
-        Product created = productService.addProduct(product1);
+        Product created = productService.addProduct(productRequest1);
 
         // Assertions using AssertJ
         assertThat(created.getName()).isEqualTo("Laptop");
