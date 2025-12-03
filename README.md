@@ -1,2 +1,90 @@
 # demo-store-mgmt-tool
 Spring Boot Store Management Tool Demo
+# Store Management API (v1)
+
+A simple, secure RESTful API for managing a product catalog using Spring Boot, an H2 in-memory database, and HTTP Basic Authentication.
+
+## Features
+
+*   **CRUD Operations:** Add, find, update price, and delete products.
+*   **Security:** HTTP Basic Authentication with role-based access control (`USER` and `ADMIN` roles).
+*   **Data Storage:** H2 in-memory database for local development.
+*   **Error Handling:** Global exception handling for consistent API responses.
+*   **Validation:** Jakarta Bean Validation for input integrity.
+*   **API Versioning:** All endpoints are prefixed with `/api/v1/`.
+
+## Technologies Used
+
+*   **Java:** JDK 17+
+*   **Framework:** Spring Boot 3.1+
+*   **Build Tool:** Maven
+*   **Database:** H2 In-Memory Database
+*   **Authentication:** Spring Security (HTTP Basic Auth)
+*   **Validation:** Jakarta Bean Validation
+*   **Testing:** JUnit 5, Mockito, Spring Test (MockMvc/WebTestClient)
+*   **Utility:** Lombok (for boilerplate reduction)
+
+## Getting Started
+
+### Prerequisites
+
+*   JDK 17 or higher installed.
+*   Maven installed (optional if using the included `mvnw` wrapper).
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone github.com
+    cd demo-store-mgmt-tool
+    ```
+
+2.  **Build the project:**
+    ```bash
+    ./mvnw clean package
+    ```
+
+### Running the Application
+
+You can run the application directly using the Spring Boot Maven plugin:
+
+```bash
+./mvnw spring-boot:run
+
+The application will start on http://localhost:8080.
+
+
+### API Documentation and Endpoints
+
+The API is secured using HTTP Basic Authentication. Use the following default credentials (loaded from src/main/resources/data.sql):
+Username	Password	Role(s)
+user	password	ROLE_USER
+admin	adminpass	ROLE_ADMIN, ROLE_USER
+
+
+Endpoints Overview
+
+HTTP Method 	Endpoint	                Description	                Required Role
+POST	            /api/v1/products	        Add a new product	        ADMIN
+GET	            /api/v1/products	        List all products	        USER, ADMIN
+GET	            /api/v1/products/{id}	    Get product by ID	        USER, ADMIN
+PUT	            /api/v1/products/{id}/price	Update a product's price	ADMIN
+DELETE	            /api/v1/products/{id}	    Delete a product	        ADMIN
+
+Example Usage (using curl)
+
+1. Add a Product (ADMIN)
+
+curl -X POST --user admin:adminpass -H "Content-Type: application/json" -d '{"name": "Laptop", "price": 1200.00}' http://localhost:8080/api/v1/products
+
+2. Get All Products (USER)
+
+curl --user user:password http://localhost:8080/api/v1/products
+
+
+Running Tests
+Tests are configured to run against a separate H2 in-memory database instance to ensure isolation from the main application.
+bash
+
+./mvnw clean test
+

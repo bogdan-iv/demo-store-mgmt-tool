@@ -13,9 +13,9 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>product-management</artifactId>
+    <artifactId>demo-store-mgmt-tool</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>product-management</name>
+    <name>demo-store-mgmt-tool</name>
 
     <properties>
         <java.version>17</java.version>
