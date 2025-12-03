@@ -2,132 +2,129 @@ package com.demo.store.mgmt.tool.controllers;
 
 import com.demo.store.mgmt.tool.dto.AddProductRequest;
 import com.demo.store.mgmt.tool.models.Product;
-import com.demo.store.mgmt.tool.services.ProductService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.demo.store.mgmt.tool.repositories.ProductRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.test.web.servlet.client.MockMvcWebTestClient;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Optional;
 import org.springframework.web.util.UriComponentsBuilder;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest
-@AutoConfigureWebMvc
-//@WebMvcTest(ProductController.class)
-//@Import(SecurityConfig.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
+@ActiveProfiles("test") // <-- Add this annotation to select the test resources config
 public class ProductControllerTest {
-    //@Autowired
-    private MockMvc mockMvc;
+
+    private WebTestClient webTestClient;
 
     @Autowired
-    private WebApplicationContext webApplicationContext;
+    private ProductRepository productRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private ProductService productService;
-
+    private WebApplicationContext context;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        this.webTestClient = MockMvcWebTestClient.bindToApplicationContext(this.context)
+                .apply(SecurityMockMvcConfigurers.springSecurity()) // Apply MVC Security Context
+                .build();
+        // Also clear the test DB here if needed
+        productRepository.deleteAll();
     }
 
     // Test Case 1: Adding a product as an ADMIN user (authorized)
     @Test
     @WithMockUser(roles = "ADMIN") // User has the required "ADMIN" role
     void testAddProduct_AsAdmin_ShouldSucceedWith201() throws Exception {
-        AddProductRequest product = new AddProductRequest("Keyboard",BigDecimal.valueOf(75.0));
-        Product savedProduct = new Product(3L, "Keyboard", BigDecimal.valueOf(75.00));
-        when(productService.addProduct(any(Product.class))).thenReturn(savedProduct);
+        AddProductRequest request = new AddProductRequest("Keyboard",BigDecimal.valueOf(75.0));
 
-        mockMvc.perform(post("/api/v1/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(product)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Keyboard"));
+        webTestClient.post().uri("/api/v1/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request) // Pass the DTO directly
+                .exchange() // Perform the request
+                .expectStatus().isCreated() // Assert HTTP status is 201 Created
+                .expectHeader().contentType(MediaType.APPLICATION_JSON) // Assert JSON content type
+                .expectBody() // Start asserting the response body content
+                .jsonPath("$.name").isEqualTo("Keyboard"); // Use jsonPath for assertion
     }
+
 
     // Test Case 1: Adding a product as an USER user (not authorized)
     @Test
     @WithMockUser(roles = "USER") // User has the not authorized "USER" role
     void testAddProduct_AsUser_ShouldBeForbidden() throws Exception {
-        AddProductRequest product = new AddProductRequest("Keyboard",BigDecimal.valueOf(75.0));
-        Product savedProduct = new Product(3L, "Keyboard", BigDecimal.valueOf(75.00));
-        when(productService.addProduct(any(Product.class))).thenReturn(savedProduct);
+        AddProductRequest request = new AddProductRequest("Keyboard", BigDecimal.valueOf(75.00));
 
-        mockMvc.perform(post("/api/v1/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(product)))
-                .andExpect(status().isForbidden());
+        // The service layer is not mocked, but the security layer blocks the request
+        webTestClient.post().uri("/api/v1/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isForbidden(); // Expect 403 Forbidden
     }
 
     @Test
     @WithMockUser(roles = "USER")
     void testGetAllProducts() throws Exception {
 
-        Product product1 = new Product(1L, "Laptop", BigDecimal.valueOf(1200.00));
-        Product product2 = new Product(2L, "Mouse",  BigDecimal.valueOf(25.00));
-        when(productService.findAllProducts()).thenReturn(Arrays.asList(product1, product2));
-        mockMvc.perform(get("/api/v1/products")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Laptop"))
-                .andExpect(jsonPath("$.length()").value(2));
+        productRepository.save(new Product(null, "Laptop", BigDecimal.valueOf(1200.00)));
+        productRepository.save(new Product(null, "Mouse",  BigDecimal.valueOf(25.00)));
+
+        webTestClient.get().uri("/api/v1/products")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Product.class) // Expect a list of Product objects back
+                .hasSize(2)
+                .value(products -> {
+                    // AssertJ assertions on the resulting list
+                    assertThat(products.get(0).getName()).isEqualTo("Laptop");
+                });
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testChangePrice() throws Exception {
-        Long productId = 1L;
-
-        BigDecimal oldPrice = BigDecimal.valueOf(50.00);
+        // Pre-populate DB with an item
+        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00)));
+        Long productId = existingProduct.getId();
         BigDecimal newPrice = BigDecimal.valueOf(99.99);
-        Product existingProduct = new Product(productId, "Old Product", oldPrice);
-        Product updatedProduct = new Product(productId, "Old Product", newPrice);
 
-        when(productService.findProductById(productId)).thenReturn(Optional.of(existingProduct));
-        when(productService.changeProductPrice(productId, newPrice)).thenReturn(updatedProduct);
-
-        // Construct the URL with a query parameter: /api/products/admin/1/price?newPrice=99.99
         String url = UriComponentsBuilder.fromPath("/api/v1/products/{id}/price")
                 .queryParam("newPrice", newPrice)
                 .buildAndExpand(productId)
                 .toUriString();
 
-        mockMvc.perform(put(url)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()) // Expecting 200 OK for an update
-                .andExpect(jsonPath("$.price").value(newPrice));
-
+        webTestClient.put().uri(url)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.price").isEqualTo(newPrice);
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDelete() throws Exception {
-        // Mock the void method call (doNothing is cleaner than when/thenReturn)
-        doNothing().when(productService).deleteProduct(1L);
+        // Pre-populate test DB with an item to delete
+        Product itemToDelete = productRepository.save(new Product(null, "Temp Item", BigDecimal.valueOf(10.00)));
+        Long productId = itemToDelete.getId();
 
-        mockMvc.perform(delete("/api/v1/products/{id}", 1L))
-                .andExpect(status().isNoContent()); // Expecting 204 No Content
+        webTestClient.delete().uri("/api/v1/products/{id}", productId)
+                .exchange()
+                .expectStatus().isNoContent() // Expect 204 No Content
+                .expectBody().isEmpty(); // Assert body is empty
 
-        verify(productService, times(1)).deleteProduct(1L);
+        // Verify it was actually deleted from the H2 DB
+        assertThat(productRepository.findById(productId)).isEmpty();
     }
 }
