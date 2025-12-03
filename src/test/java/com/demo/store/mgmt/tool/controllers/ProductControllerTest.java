@@ -18,7 +18,9 @@ import org.springframework.test.web.servlet.client.MockMvcWebTestClient;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
+
 import org.springframework.web.util.UriComponentsBuilder;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -45,9 +47,10 @@ public class ProductControllerTest {
 
     // Test Case 1: Adding a product as an ADMIN user (authorized)
     @Test
-    @WithMockUser(roles = "ADMIN") // User has the required "ADMIN" role
-    void testAddProduct_AsAdmin_ShouldSucceedWith201() throws Exception {
-        AddProductRequest request = new AddProductRequest("Keyboard",BigDecimal.valueOf(75.0));
+    @WithMockUser(roles = "ADMIN")
+    // User has the required "ADMIN" role
+    void testAddProduct_AsAdmin_ShouldSucceedWith201() {
+        AddProductRequest request = new AddProductRequest("Keyboard", BigDecimal.valueOf(75.0));
 
         webTestClient.post().uri("/api/v1/products")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -62,8 +65,9 @@ public class ProductControllerTest {
 
     // Test Case 1: Adding a product as an USER user (not authorized)
     @Test
-    @WithMockUser(roles = "USER") // User has the not authorized "USER" role
-    void testAddProduct_AsUser_ShouldBeForbidden() throws Exception {
+    @WithMockUser(roles = "USER")
+    // User has the not authorized "USER" role
+    void testAddProduct_AsUser_ShouldBeForbidden() {
         AddProductRequest request = new AddProductRequest("Keyboard", BigDecimal.valueOf(75.00));
 
         // The service layer is not mocked, but the security layer blocks the request
@@ -76,10 +80,10 @@ public class ProductControllerTest {
 
     @Test
     @WithMockUser(roles = "USER")
-    void testGetAllProducts() throws Exception {
+    void testGetAllProducts() {
 
         productRepository.save(new Product(null, "Laptop", BigDecimal.valueOf(1200.00)));
-        productRepository.save(new Product(null, "Mouse",  BigDecimal.valueOf(25.00)));
+        productRepository.save(new Product(null, "Mouse", BigDecimal.valueOf(25.00)));
 
         webTestClient.get().uri("/api/v1/products")
                 .exchange()
@@ -94,7 +98,7 @@ public class ProductControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void testChangePrice() throws Exception {
+    void testChangePrice() {
         // Pre-populate DB with an item
         Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00)));
         Long productId = existingProduct.getId();
@@ -114,7 +118,7 @@ public class ProductControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void testDelete() throws Exception {
+    void testDelete() {
         // Pre-populate test DB with an item to delete
         Product itemToDelete = productRepository.save(new Product(null, "Temp Item", BigDecimal.valueOf(10.00)));
         Long productId = itemToDelete.getId();
