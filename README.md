@@ -48,43 +48,48 @@ A simple, secure RESTful API for managing a product catalog using Spring Boot, a
 
 You can run the application directly using the Spring Boot Maven plugin:
 
+
 ```bash
 ./mvnw spring-boot:run
+```
 
 The application will start on http://localhost:8080.
 
-
 ### API Documentation and Endpoints
 
-The API is secured using HTTP Basic Authentication. Use the following default credentials (loaded from src/main/resources/data.sql):
+The API is secured using HTTP Basic Authentication. 
+Use the following default credentials (loaded from src/main/resources/data.sql):
+
+```bash
 Username	Password	Role(s)
 user	password	ROLE_USER
 admin	adminpass	ROLE_ADMIN, ROLE_USER
-
+```
 
 Endpoints Overview
-
+```bash
 HTTP Method 	Endpoint	                Description	                Required Role
-POST	            /api/v1/products	        Add a new product	        ADMIN
+POST	        /api/v1/products	        Add a new product	        ADMIN
 GET	            /api/v1/products	        List all products	        USER, ADMIN
 GET	            /api/v1/products/{id}	    Get product by ID	        USER, ADMIN
 PUT	            /api/v1/products/{id}/price	Update a product's price	ADMIN
-DELETE	            /api/v1/products/{id}	    Delete a product	        ADMIN
-
+DELETE	        /api/v1/products/{id}	    Delete a product	        ADMIN
+```
 Example Usage (using curl)
 
 1. Add a Product (ADMIN)
-
+```bash
 curl -X POST --user admin:adminpass -H "Content-Type: application/json" -d '{"name": "Laptop", "price": 1200.00}' http://localhost:8080/api/v1/products
-
+```
 2. Get All Products (USER)
-
+```bash
 curl --user user:password http://localhost:8080/api/v1/products
-
-
+```
 Running Tests
+
 Tests are configured to run against a separate H2 in-memory database instance to ensure isolation from the main application.
 bash
 
+```bash
 ./mvnw clean test
-
+```
