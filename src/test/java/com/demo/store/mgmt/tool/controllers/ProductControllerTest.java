@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebM
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -28,6 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureWebMvc
+//@WebMvcTest(ProductController.class)
+//@Import(SecurityConfig.class)
 public class ProductControllerTest {
     //@Autowired
     private MockMvc mockMvc;
@@ -47,26 +50,43 @@ public class ProductControllerTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
+    // Test Case 1: Adding a product as an ADMIN user (authorized)
     @Test
-    void testCreateProduct() throws Exception {
+    @WithMockUser(roles = "ADMIN") // User has the required "ADMIN" role
+    void testAddProduct_AsAdmin_ShouldSucceedWith201() throws Exception {
         AddProductRequest product = new AddProductRequest("Keyboard",BigDecimal.valueOf(75.0));
         Product savedProduct = new Product(3L, "Keyboard", BigDecimal.valueOf(75.00));
         when(productService.addProduct(any(Product.class))).thenReturn(savedProduct);
 
-        mockMvc.perform(post("/api/products/public")
+        mockMvc.perform(post("/api/v1/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(product)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Keyboard"));
     }
 
+    // Test Case 1: Adding a product as an USER user (not authorized)
     @Test
+    @WithMockUser(roles = "USER") // User has the not authorized "USER" role
+    void testAddProduct_AsUser_ShouldBeForbidden() throws Exception {
+        AddProductRequest product = new AddProductRequest("Keyboard",BigDecimal.valueOf(75.0));
+        Product savedProduct = new Product(3L, "Keyboard", BigDecimal.valueOf(75.00));
+        when(productService.addProduct(any(Product.class))).thenReturn(savedProduct);
+
+        mockMvc.perform(post("/api/v1/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(product)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
     void testGetAllProducts() throws Exception {
 
         Product product1 = new Product(1L, "Laptop", BigDecimal.valueOf(1200.00));
         Product product2 = new Product(2L, "Mouse",  BigDecimal.valueOf(25.00));
         when(productService.findAllProducts()).thenReturn(Arrays.asList(product1, product2));
-        mockMvc.perform(get("/api/products/public")
+        mockMvc.perform(get("/api/v1/products")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Laptop"))
@@ -74,6 +94,7 @@ public class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testChangePrice() throws Exception {
         Long productId = 1L;
 
@@ -86,7 +107,7 @@ public class ProductControllerTest {
         when(productService.changeProductPrice(productId, newPrice)).thenReturn(updatedProduct);
 
         // Construct the URL with a query parameter: /api/products/admin/1/price?newPrice=99.99
-        String url = UriComponentsBuilder.fromPath("/api/products/admin/{id}/price")
+        String url = UriComponentsBuilder.fromPath("/api/v1/products/{id}/price")
                 .queryParam("newPrice", newPrice)
                 .buildAndExpand(productId)
                 .toUriString();
@@ -99,11 +120,12 @@ public class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void testDelete() throws Exception {
         // Mock the void method call (doNothing is cleaner than when/thenReturn)
         doNothing().when(productService).deleteProduct(1L);
 
-        mockMvc.perform(delete("/api/products/admin/{id}", 1L))
+        mockMvc.perform(delete("/api/v1/products/{id}", 1L))
                 .andExpect(status().isNoContent()); // Expecting 204 No Content
 
         verify(productService, times(1)).deleteProduct(1L);

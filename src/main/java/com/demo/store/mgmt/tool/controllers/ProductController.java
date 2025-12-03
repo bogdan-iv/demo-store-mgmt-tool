@@ -9,13 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/api/v1/products")
 public class ProductController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
@@ -25,10 +26,9 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @PostMapping("/public")
-    // Use @Valid to apply the validation constraints defined in the record
-    public ResponseEntity<Product>  addProduct(@RequestBody @Valid AddProductRequest productRequest) {
-        // Map the record data to the Entity or Service method parameters
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<Product>  addProduct(@RequestBody @Valid AddProductRequest productRequest) {
         Product newProduct = new Product();
         newProduct.setName(productRequest.name());
         newProduct.setPrice(productRequest.price());
@@ -37,6 +37,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ProductResponse> findProductById(@PathVariable Long id) {
         return productService.findProductById(id)
                 .map(product -> new ProductResponse(product.getId(), product.getName(), product.getPrice()))
@@ -44,21 +45,24 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/public")
+    @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Product>> findAllProducts() {
         logger.info("Fetching all products");
         List<Product> products = productService.findAllProducts();
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/public/search")
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Product>> findProducts(@RequestParam String name) {
         logger.info("Searching products by name: {}", name);
         List<Product> products = productService.findProductsByNameContaining(name);
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/public/price-range")
+    @GetMapping("/price-range")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Product>> findProductsByPriceRange(
             @RequestParam BigDecimal minPrice,
             @RequestParam BigDecimal maxPrice) {
@@ -67,7 +71,8 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @PutMapping("/admin/{id}/price")
+    @PutMapping("/{id}/price")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Product> changeProductPrice(
             @PathVariable Long id,
             @RequestParam BigDecimal newPrice) {
@@ -82,7 +87,8 @@ public class ProductController {
         }
     }
 
-    @DeleteMapping("/admin/{id}")
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         logger.info("Deleting product with ID: {}", id);
         try {
@@ -95,7 +101,8 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/user/count")
+    @GetMapping("/count")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Long> getProductCount() {
         logger.info("Fetching product count");
         long count = productService.countProducts();
