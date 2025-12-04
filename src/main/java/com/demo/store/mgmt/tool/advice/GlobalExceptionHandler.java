@@ -1,7 +1,9 @@
 package com.demo.store.mgmt.tool.advice;
 
+import com.demo.store.mgmt.tool.exception.ConcurrencyConflictException;
 import com.demo.store.mgmt.tool.exception.ProductNotFoundException;
 import com.demo.store.mgmt.tool.exception.ProductValidationException;
+import jakarta.persistence.OptimisticLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -87,6 +89,28 @@ public class GlobalExceptionHandler {
                 request.getDescription(false)
         );
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({OptimisticLockException.class, org.springframework.orm.ObjectOptimisticLockingFailureException.class})
+    public ResponseEntity<ErrorResponse> handleOptimisticLockException(Exception ex, WebRequest request) {
+        ErrorResponse errorDetails = new ErrorResponse(
+                HttpStatus.CONFLICT.value(), // Return 409 Conflict status code
+                new Date(),
+                "Data was updated by another user. Please reload the data and try again.",
+                request.getDescription(false)
+        );
+        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(ConcurrencyConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrencyConflictException(ConcurrencyConflictException ex, WebRequest request) {
+        ErrorResponse errorDetails = new ErrorResponse(
+                HttpStatus.CONFLICT.value(), // Return 409 Conflict status code
+                new Date(),
+                ex.getMessage(), // This will use the custom message you provided
+                request.getDescription(false)
+        );
+        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
     }
 
     // A generic handler for any other unexpected exceptions

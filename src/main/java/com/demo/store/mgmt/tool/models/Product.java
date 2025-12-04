@@ -25,4 +25,7 @@ public class Product {
 
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
+
+    @Version
+    private Long version;
 }

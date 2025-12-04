@@ -125,8 +125,8 @@ public class ProductControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void testGetAllProducts() {
-        productRepository.save(new Product(null, "Laptop", BigDecimal.valueOf(1200.00)));
-        productRepository.save(new Product(null, "Mouse", BigDecimal.valueOf(25.00)));
+        productRepository.save(new Product(null, "Laptop", BigDecimal.valueOf(1200.00), 1L));
+        productRepository.save(new Product(null, "Mouse", BigDecimal.valueOf(25.00), 1L));
 
         webTestClient.get().uri("/api/v1/products")
                 .exchange()
@@ -143,7 +143,7 @@ public class ProductControllerTest {
     @WithMockUser(roles = "ADMIN")
     void testChangePriceShouldSucceed() {
         // Pre-populate DB with an item
-        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00)));
+        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00), 1L));
         Long productId = existingProduct.getId();
         BigDecimal newPrice = BigDecimal.valueOf(99.99);
 
@@ -163,7 +163,7 @@ public class ProductControllerTest {
     @WithMockUser(roles = "ADMIN")
     void testChangePriceShouldFailWith400() {
         // Pre-populate DB with an item
-        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00)));
+        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00), 1L));
         Long productId = existingProduct.getId();
         //Invalid price containing letters
         String newPrice = "99A.99";
@@ -183,7 +183,7 @@ public class ProductControllerTest {
     @WithMockUser(roles = "ADMIN")
     void testDelete() {
         // Pre-populate test DB with an item to delete
-        Product itemToDelete = productRepository.save(new Product(null, "Temp Item", BigDecimal.valueOf(10.00)));
+        Product itemToDelete = productRepository.save(new Product(null, "Temp Item", BigDecimal.valueOf(10.00), 1L));
         Long productId = itemToDelete.getId();
 
         webTestClient.delete().uri("/api/v1/products/{id}", productId)
