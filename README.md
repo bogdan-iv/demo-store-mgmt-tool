@@ -9,8 +9,8 @@ A simple, secure RESTful API for managing a product catalog using Spring Boot, a
 *   **CRUD Operations:** Add, find, update price, delete products following RESTful conventions.
 *   **Search Functionality:** Filter products by name or get total count.
 *   **Security:** HTTP Basic Authentication with role-based access control (`USER` and `ADMIN` roles).
-*   **Data Storage:** H2 in-memory database for local development.
-    **Error Handling:** Global exception handling for consistent API responses (HTTP 409 Conflict for concurrency errors).
+*   **Data Storage:** H2 in-memory database for local development. 
+*   **Error Handling:** Global exception handling for consistent API responses (HTTP 409 Conflict for concurrency errors).
 *   **Validation:** Jakarta Bean Validation for input integrity.
 *   **API Versioning:** All endpoints are prefixed with `/api/v1/`.
 *   **Concurrency Control:** Implemented **Optimistic Locking** using `@Version` fields to manage simultaneous updates without locking the database.
