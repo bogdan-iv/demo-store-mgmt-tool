@@ -25,8 +25,6 @@ public class User {
     @Column(name = "enabled")
     private boolean enabled;
 
-    //@ElementCollection(fetch = FetchType.EAGER)
-    //@CollectionTable(name = "authorities", joinColumns = @JoinColumn(name = "username"))
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "username", referencedColumnName = "username")
     private Set<Authority> authorities;
