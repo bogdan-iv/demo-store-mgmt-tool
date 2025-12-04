@@ -14,8 +14,6 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByName(String name);
 
-    List<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
-
     @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Product> findByNameContaining(@Param("name") String name);
 }

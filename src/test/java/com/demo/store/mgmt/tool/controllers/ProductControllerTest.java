@@ -1,6 +1,7 @@
 package com.demo.store.mgmt.tool.controllers;
 
 import com.demo.store.mgmt.tool.dto.AddProductRequest;
+import com.demo.store.mgmt.tool.dto.UpdatePriceRequest;
 import com.demo.store.mgmt.tool.models.Product;
 import com.demo.store.mgmt.tool.repositories.ProductRepository;
 
@@ -18,9 +19,6 @@ import org.springframework.test.web.servlet.client.MockMvcWebTestClient;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
-
-import org.springframework.web.util.UriComponentsBuilder;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -147,37 +145,38 @@ public class ProductControllerTest {
         Long productId = existingProduct.getId();
         BigDecimal newPrice = BigDecimal.valueOf(99.99);
 
-        String url = UriComponentsBuilder.fromPath("/api/v1/products/{id}/price")
-                .queryParam("newPrice", newPrice)
-                .buildAndExpand(productId)
-                .toUriString();
+        UpdatePriceRequest requestDto = new UpdatePriceRequest(newPrice);
 
-        webTestClient.put().uri(url)
+        webTestClient.put().uri("/api/v1/products/{id}", productId) // Use the cleaner URL
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto) // Send the DTO as the request body
                 .exchange()
-                .expectStatus().isOk()
+                .expectStatus().isOk() // Expecting 200 OK for an update
                 .expectBody()
-                .jsonPath("$.price").isEqualTo(newPrice);
+                .jsonPath("$.price").isEqualTo(newPrice.doubleValue());
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void testChangePriceShouldFailWith400() {
-        // Pre-populate DB with an item
-        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00), 1L));
+    void testChangePriceShouldFailWith400ForInvalidPriceType() {
+        // 1. Pre-populate DB with an item
+        Product existingProduct = productRepository.save(new Product(null, "Old Product", BigDecimal.valueOf(50.00), null));
         Long productId = existingProduct.getId();
-        //Invalid price containing letters
-        String newPrice = "99A.99";
 
-        String url = UriComponentsBuilder.fromPath("/api/v1/products/{id}/price")
-                .queryParam("newPrice", newPrice)
-                .buildAndExpand(productId)
-                .toUriString();
+        // 2. Prepare an invalid JSON payload (a string value for a BigDecimal field)
+        // We send a raw string here because we are intentionally testing the JSON parsing failure.
+        String invalidJsonPayload = "{\"newPrice\": \"99A.99\"}";
 
-        webTestClient.put().uri(url)
+        // 3. Perform the PUT request with the invalid JSON body
+        webTestClient.put().uri("/api/v1/products/{id}", productId) // Use the cleaner URL
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidJsonPayload) // Send the raw invalid JSON string
                 .exchange()
-                .expectStatus().is4xxClientError();
+                .expectStatus().isBadRequest() // Assert HTTP Status 400 Bad Request
+                .expectBody()
+                // Assert that the body contains the custom message from our GlobalExceptionHandler
+                .jsonPath("$.message").isEqualTo("Malformed JSON or invalid data type for field.");
     }
-
 
     @Test
     @WithMockUser(roles = "ADMIN")

@@ -2,6 +2,7 @@ package com.demo.store.mgmt.tool.controllers;
 
 import com.demo.store.mgmt.tool.dto.AddProductRequest;
 import com.demo.store.mgmt.tool.dto.ProductResponse;
+import com.demo.store.mgmt.tool.dto.UpdatePriceRequest;
 import com.demo.store.mgmt.tool.models.Product;
 import com.demo.store.mgmt.tool.services.ProductService;
 import jakarta.validation.Valid;
@@ -58,23 +59,15 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/price-range")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Product>> findProductsByPriceRange(
-            @RequestParam BigDecimal minPrice,
-            @RequestParam BigDecimal maxPrice) {
-        logger.info("Fetching products in price range: {} - {}", minPrice, maxPrice);
-        List<Product> products = productService.findProductsByPriceRange(minPrice, maxPrice);
-        return ResponseEntity.ok(products);
-    }
-
-    @PutMapping("/{id}/price")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Product> changeProductPrice(
             @PathVariable Long id,
-            @RequestParam @Valid BigDecimal newPrice) {
-        logger.info("Updating price for product ID: {} to {}", id, newPrice);
-        Product updatedProduct = productService.changeProductPrice(id, newPrice);
+            @Valid @RequestBody UpdatePriceRequest priceRequest) {
+        logger.info("Updating price for product ID: {} to {}", id, priceRequest.newPrice());
+
+        // Pass the value from the DTO record to the service
+        Product updatedProduct = productService.changeProductPrice(id, priceRequest.newPrice());
 
         logger.info("Price updated successfully for product ID: {}", id);
         return ResponseEntity.ok(updatedProduct);

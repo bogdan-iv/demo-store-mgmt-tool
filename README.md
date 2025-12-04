@@ -70,12 +70,16 @@ admin	adminpass	ROLE_ADMIN, ROLE_USER
 
 Endpoints Overview
 ```bash
-HTTP Method 	Endpoint	                Description	                Required Role
-POST	        /api/v1/products	        Add a new product	        ADMIN
-GET	            /api/v1/products	        List all products	        USER, ADMIN
-GET	            /api/v1/products/{id}	    Get product by ID	        USER, ADMIN
-PUT	            /api/v1/products/{id}/price	Update a product's price	ADMIN
-DELETE	        /api/v1/products/{id}	    Delete a product	        ADMIN
+HTTP Method 	Endpoint	                            Description	                Required Role
+POST	        /api/v1/products	                    Add a new product	        ADMIN
+GET	            /api/v1/products	                    List all products	        USER, ADMIN
+GET	            /api/v1/products/{id}	                Get product by ID	        USER, ADMIN
+DELETE	        /api/v1/products/{id}	                Delete a product	        ADMIN
+PUT	            /api/v1/products/{id}	                Update a product's price 	ADMIN
+                                                        (body required: 
+                                                        {"newPrice": ...})
+GET	            /api/v1/products/search?name={string}	Search products by name 	USER, ADMIN                                            	
+                                                        containing {string}	                                            	
 ```
 Example Usage (using curl)
 
@@ -83,10 +87,20 @@ Example Usage (using curl)
 ```bash
 curl -X POST --user admin:adminpass -H "Content-Type: application/json" -d '{"name": "Laptop", "price": 1200.00}' http://localhost:8080/api/v1/products
 ```
-2. Get All Products (USER)
+2. Update a Product Price (ADMIN)
+```bash
+curl -X PUT --user admin:adminpass -H "Content-Type: application/json" -d '{"newPrice": 999.99}' http://localhost:8080/api/v1/products/1
+```
+3. Get All Products (USER)
 ```bash
 curl --user user:password http://localhost:8080/api/v1/products
 ```
+3. Search Products by Name (USER)
+```bash
+curl --user user:password "http://localhost:8080/api/v1/products/search?name=Mouse"
+
+```
+
 Running Tests
 
 Tests are configured to run against a separate H2 in-memory database instance to ensure isolation from the main application.
