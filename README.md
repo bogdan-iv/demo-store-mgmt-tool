@@ -6,7 +6,8 @@ A simple, secure RESTful API for managing a product catalog using Spring Boot, a
 
 ## Features
 
-*   **CRUD Operations:** Add, find, update price, and delete products.
+*   **CRUD Operations:** Add, find, update price, delete products following RESTful conventions.
+*   **Search Functionality:** Filter products by name or get total count.
 *   **Security:** HTTP Basic Authentication with role-based access control (`USER` and `ADMIN` roles).
 *   **Data Storage:** H2 in-memory database for local development.
     **Error Handling:** Global exception handling for consistent API responses (HTTP 409 Conflict for concurrency errors).
@@ -74,6 +75,7 @@ HTTP Method 	Endpoint	                            Description	                Re
 POST	        /api/v1/products	                    Add a new product	        ADMIN
 GET	            /api/v1/products	                    List all products	        USER, ADMIN
 GET	            /api/v1/products/{id}	                Get product by ID	        USER, ADMIN
+GET	            /api/v1/products/count	          Get the total count of products	USER, ADMIN
 DELETE	        /api/v1/products/{id}	                Delete a product	        ADMIN
 PUT	            /api/v1/products/{id}	                Update a product's price 	ADMIN
                                                         (body required: 
@@ -95,10 +97,13 @@ curl -X PUT --user admin:adminpass -H "Content-Type: application/json" -d '{"new
 ```bash
 curl --user user:password http://localhost:8080/api/v1/products
 ```
-3. Search Products by Name (USER)
+4. Search Products by Name (USER)
 ```bash
 curl --user user:password "http://localhost:8080/api/v1/products/search?name=Mouse"
-
+```
+5.Get Product Count (USER)
+```bash
+curl --user user:password http://localhost:8080/api/v1/products/count
 ```
 
 Running Tests
